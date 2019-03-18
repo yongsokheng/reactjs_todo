@@ -1,11 +1,13 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
+import { Button } from 'reactstrap';
+
 class ToDoItem extends Component {
   render() {
     return (
-      <li className="todo-item">
-        {this.props.name}
-        <button onClick={this.props.onDelete}>Delete</button>
-      </li>
+      <tr>
+        <td>{this.props.name}</td>
+        <td><Button color="danger" onClick={this.props.onDelete}>Delete</Button></td>
+      </tr>
     )
   }
 }
