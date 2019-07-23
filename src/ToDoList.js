@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import CreateForm from './CreateForm';
 import ToDoItem from './ToDoItem';
 import './ToDoList.css';
+import { Table, Container, Row} from 'reactstrap';
 
 class TodoList extends Component {
   constructor() {
@@ -54,14 +55,27 @@ class TodoList extends Component {
 
   render() {
     return (
-      <div className="container todo-items">
-        <ul>{this.renderItem()}</ul>
-        <CreateForm
-          onAddItem={(e) => this.onAddItem(e)}
-          value={this.state.taskName}
-          onChange={(e) => this.onChange(e)}
-        />
-      </div>
+      <Container>
+        <Row>
+          <Table>
+            <thead>
+              <tr>
+                <th>Task Name</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {this.renderItem()}
+            </tbody>
+          </Table>
+
+          <CreateForm
+            onAddItem={(e) => this.onAddItem(e)}
+            value={this.state.taskName}
+            onChange={(e) => this.onChange(e)}
+          />
+        </Row>
+      </Container>
     )
   }
 }
