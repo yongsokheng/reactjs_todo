@@ -8,30 +8,66 @@ class TodoList extends Component {
   constructor() {
     super()
     this.state = {
-      items: [
-        {id: 1, name: 'task1'},
-        {id: 2, name: 'task2'},
-        {id: 3, name: 'task3'},
-        {id: 4, name: 'task4'},
-      ],
+      items: [],
       taskName: ''
     }
   }
 
+  componentDidMount() {
+    fetch('http://192.168.2.103:2000/api/v1/tasks')
+    .then(res => res.json())
+    .then((response) => {
+      this.setState({items: response.data})
+    })
+    .catch(error => {
+      console.log(error);
+    })
+  }
+
   onAddItem(e) {
     e.preventDefault();
-    let newTask = {id: Date.now(), name: this.state.taskName}
-    this.setState({
-      items: [...this.state.items, newTask]
+    fetch('http://192.168.2.103:2000/api/v1/tasks', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title: this.state.taskName,
+      })
+    })
+    .then(res => res.json())
+    .then((response) => {
+      if(response.success) {
+        this.setState({items: [...this.state.items, response.data]});
+      } else {
+        alert(response.errors.map(data => data.message).join('\n'));
+      }
+    })
+    .catch(error => {
+      console.log(error);
     })
   }
 
   onDelete(id) {
-    const filteredItems = this.state.items.filter(item => {
-      return item.id !== id
+    fetch(`http://192.168.2.103:2000/api/v1/tasks/${id}`, {
+      method: 'DELETE'
     })
-    this.setState({
-      items: filteredItems,
+    .then(res => res.json())
+    .then((response) => {
+      if(response.success) {
+        const filteredItems = this.state.items.filter(item => {
+          return item.id !== id
+        })
+        this.setState({
+          items: filteredItems,
+        })
+      } else {
+        alert("Cannot delete");
+      }
+    })
+    .catch(error => {
+      console.log(error);
     })
   }
 
@@ -46,7 +82,7 @@ class TodoList extends Component {
     const items = this.state.items.map((task) =>
       <ToDoItem
         key={task.id}
-        name={task.name}
+        name={task.title}
         onDelete={() => this.onDelete(task.id)}
       />
     )
