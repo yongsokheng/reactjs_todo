@@ -14,7 +14,7 @@ class TodoList extends Component {
   }
 
   componentDidMount() {
-    fetch('http://192.168.2.103:2000/api/v1/tasks')
+    fetch('http://192.168.2.105:2000/api/v1/tasks')
     .then(res => res.json())
     .then((response) => {
       this.setState({items: response.data})
@@ -26,7 +26,7 @@ class TodoList extends Component {
 
   onAddItem(e) {
     e.preventDefault();
-    fetch('http://192.168.2.103:2000/api/v1/tasks', {
+    fetch('http://192.168.2.105:2000/api/v1/tasks', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -50,7 +50,7 @@ class TodoList extends Component {
   }
 
   onDelete(id) {
-    fetch(`http://192.168.2.103:2000/api/v1/tasks/${id}`, {
+    fetch(`http://192.168.2.105:2000/api/v1/tasks/${id}`, {
       method: 'DELETE'
     })
     .then(res => res.json())
@@ -61,6 +61,37 @@ class TodoList extends Component {
         })
         this.setState({
           items: filteredItems,
+        })
+      } else {
+        alert("Cannot delete");
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    })
+  }
+
+  onUpdate(params) {
+    let id = params.id;
+    fetch(`http://192.168.2.105:2000/api/v1/tasks/${id}`, {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params)
+    })
+    .then(res => res.json())
+    .then((response) => {
+      if(response.success) {
+        let updatedData = this.state.items.map(item => {
+          if(item.id === id) {
+            return {...response.data}
+          }
+          return item;
+        });
+        this.setState({
+          items: updatedData,
         })
       } else {
         alert("Cannot delete");
@@ -82,8 +113,9 @@ class TodoList extends Component {
     const items = this.state.items.map((task) =>
       <ToDoItem
         key={task.id}
-        name={task.title}
+        task={task}
         onDelete={() => this.onDelete(task.id)}
+        onDone={() => this.onUpdate({id: task.id, completed: true})}
       />
     )
     return items;
@@ -98,6 +130,7 @@ class TodoList extends Component {
               <tr>
                 <th>Task Name</th>
                 <th>Action</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
