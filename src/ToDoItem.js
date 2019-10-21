@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Button } from 'reactstrap';
+import EditableLabel from 'react-inline-editing';
 
 class ToDoItem extends Component {
   renderData() {
@@ -17,7 +18,12 @@ class ToDoItem extends Component {
     } else {
       return(
         <tr>
-          <td>{task.title}</td>
+          <td>
+            <EditableLabel
+              text={task.title}
+              onFocusOut={this.props.onFocusOut}
+            />
+          </td>
           <td><Button color="danger" onClick={this.props.onDelete}>Delete</Button></td>
           <td><Button color="success" onClick={this.props.onDone}>Done</Button></td>
         </tr>
