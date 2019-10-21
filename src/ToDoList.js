@@ -116,6 +116,7 @@ class TodoList extends Component {
         task={task}
         onDelete={() => this.onDelete(task.id)}
         onDone={() => this.onUpdate({id: task.id, completed: true})}
+        onFocusOut={(title) => this.onUpdate({id: task.id, title: title})}
       />
     )
     return items;
