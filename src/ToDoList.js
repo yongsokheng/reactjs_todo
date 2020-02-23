@@ -3,6 +3,7 @@ import CreateForm from './CreateForm';
 import ToDoItem from './ToDoItem';
 import './ToDoList.css';
 import { Table, Container, Row} from 'reactstrap';
+import ActionCable from 'actioncable'
 
 class TodoList extends Component {
   constructor() {
@@ -14,7 +15,7 @@ class TodoList extends Component {
   }
 
   componentDidMount() {
-    fetch('http://192.168.2.105:2000/api/v1/tasks')
+    fetch('http://192.168.2.103:2000/api/v1/tasks')
     .then(res => res.json())
     .then((response) => {
       this.setState({items: response.data})
@@ -22,11 +23,37 @@ class TodoList extends Component {
     .catch(error => {
       console.log(error);
     })
+
+    const cable = ActionCable.createConsumer('ws://192.168.2.103:2000/cable')
+    this.subscriptions = cable.subscriptions.create('TasksChannel', {
+      received: (data) => {
+        if(data.type === 'add') {
+          this.setState({items: [...this.state.items, data.task]});
+        } else if(data.type === 'update') {
+          let updatedData = this.state.items.map(item => {
+            if(item.id === data.task.id) {
+              return {...data.task}
+            }
+            return item;
+          });
+          this.setState({
+            items: updatedData
+          })
+        } else if(data.type === 'delete') {
+          const filteredItems = this.state.items.filter(item => {
+            return item.id !== data.task.id
+          })
+          this.setState({
+            items: filteredItems,
+          })
+        }
+      }
+     })
   }
 
   onAddItem(e) {
     e.preventDefault();
-    fetch('http://192.168.2.105:2000/api/v1/tasks', {
+    fetch('http://192.168.2.103:2000/api/v1/tasks', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -39,7 +66,7 @@ class TodoList extends Component {
     .then(res => res.json())
     .then((response) => {
       if(response.success) {
-        this.setState({items: [...this.state.items, response.data]});
+        // this.setState({items: [...this.state.items, response.data]});
       } else {
         alert(response.errors.map(data => data.message).join('\n'));
       }
@@ -50,18 +77,18 @@ class TodoList extends Component {
   }
 
   onDelete(id) {
-    fetch(`http://192.168.2.105:2000/api/v1/tasks/${id}`, {
+    fetch(`http://192.168.2.103:2000/api/v1/tasks/${id}`, {
       method: 'DELETE'
     })
     .then(res => res.json())
     .then((response) => {
       if(response.success) {
-        const filteredItems = this.state.items.filter(item => {
-          return item.id !== id
-        })
-        this.setState({
-          items: filteredItems,
-        })
+        // const filteredItems = this.state.items.filter(item => {
+        //   return item.id !== id
+        // })
+        // this.setState({
+        //   items: filteredItems,
+        // })
       } else {
         alert("Cannot delete");
       }
@@ -73,7 +100,7 @@ class TodoList extends Component {
 
   onUpdate(params) {
     let id = params.id;
-    fetch(`http://192.168.2.105:2000/api/v1/tasks/${id}`, {
+    fetch(`http://192.168.2.103:2000/api/v1/tasks/${id}`, {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
@@ -84,15 +111,15 @@ class TodoList extends Component {
     .then(res => res.json())
     .then((response) => {
       if(response.success) {
-        let updatedData = this.state.items.map(item => {
-          if(item.id === id) {
-            return {...response.data}
-          }
-          return item;
-        });
-        this.setState({
-          items: updatedData,
-        })
+        // let updatedData = this.state.items.map(item => {
+        //   if(item.id === id) {
+        //     return {...response.data}
+        //   }
+        //   return item;
+        // });
+        // this.setState({
+        //   items: updatedData,
+        // })
       } else {
         alert("Cannot delete");
       }
