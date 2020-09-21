@@ -4,6 +4,7 @@ import ToDoItem from './ToDoItem';
 import './ToDoList.css';
 import { Table, Container, Row} from 'reactstrap';
 import ActionCable from 'actioncable'
+import {DragDropContext, Droppable} from 'react-beautiful-dnd';
 
 class TodoList extends Component {
   constructor() {
@@ -12,10 +13,38 @@ class TodoList extends Component {
       items: [],
       taskName: ''
     }
+
+    this.onDragEnd = this.onDragEnd.bind(this);
   }
 
+  reorder(list, startIndex, endIndex) {
+    const result = Array.from(list);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    return result;
+  };
+
+  onDragEnd(result) {
+    if (!result.destination) {
+      return;
+    }
+
+    const items = this.reorder(
+      this.state.items,
+      result.source.index,
+      result.destination.index
+    );
+
+    this.setState({
+      items: items
+    })
+
+    this.onUpdate({id: result.draggableId, row_order_position: result.destination.index});
+  }
+
+
   componentDidMount() {
-    fetch('http://192.168.2.103:2000/api/v1/tasks')
+    fetch('http://192.168.2.102:2000/api/v1/tasks')
     .then(res => res.json())
     .then((response) => {
       this.setState({items: response.data})
@@ -24,7 +53,7 @@ class TodoList extends Component {
       console.log(error);
     })
 
-    const cable = ActionCable.createConsumer('ws://192.168.2.103:2000/cable')
+    const cable = ActionCable.createConsumer('ws://192.168.2.102:2000/cable')
     this.subscriptions = cable.subscriptions.create('TasksChannel', {
       received: (data) => {
         if(data.type === 'add') {
@@ -53,7 +82,7 @@ class TodoList extends Component {
 
   onAddItem(e) {
     e.preventDefault();
-    fetch('http://192.168.2.103:2000/api/v1/tasks', {
+    fetch('http://192.168.2.102:2000/api/v1/tasks', {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -77,7 +106,7 @@ class TodoList extends Component {
   }
 
   onDelete(id) {
-    fetch(`http://192.168.2.103:2000/api/v1/tasks/${id}`, {
+    fetch(`http://192.168.2.102:2000/api/v1/tasks/${id}`, {
       method: 'DELETE'
     })
     .then(res => res.json())
@@ -100,7 +129,7 @@ class TodoList extends Component {
 
   onUpdate(params) {
     let id = params.id;
-    fetch(`http://192.168.2.103:2000/api/v1/tasks/${id}`, {
+    fetch(`http://192.168.2.102:2000/api/v1/tasks/${id}`, {
       method: 'PUT',
       headers: {
         Accept: 'application/json',
@@ -137,16 +166,30 @@ class TodoList extends Component {
   }
 
   renderItem() {
-    const items = this.state.items.map((task) =>
-      <ToDoItem
-        key={task.id}
-        task={task}
-        onDelete={() => this.onDelete(task.id)}
-        onDone={() => this.onUpdate({id: task.id, completed: true})}
-        onFocusOut={(title) => this.onUpdate({id: task.id, title: title})}
-      />
+    return(
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="droppable">
+          {(provided, snapshot) => (
+            <tbody ref={provided.innerRef}>
+              {
+                this.state.items.map((item, index) => (
+                    <ToDoItem
+                      index={index}
+                      key={item.id}
+                      task={item}
+                      onDelete={() => this.onDelete(item.id)}
+                      onDone={() => this.onUpdate({id: item.id, completed: true})}
+                      onFocusOut={(title) => this.onUpdate({id: item.id, title: title})}
+                    />
+                  )
+                )
+              }
+              {provided.placeholder}
+            </tbody>
+          )}
+        </Droppable>
+      </DragDropContext>
     )
-    return items;
   }
 
   render() {
@@ -161,11 +204,8 @@ class TodoList extends Component {
                 <th></th>
               </tr>
             </thead>
-            <tbody>
-              {this.renderItem()}
-            </tbody>
+            {this.renderItem()}
           </Table>
-
           <CreateForm
             onAddItem={(e) => this.onAddItem(e)}
             value={this.state.taskName}
