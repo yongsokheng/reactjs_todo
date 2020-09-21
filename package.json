@@ -6,6 +6,7 @@
     "actioncable": "^5.2.4-1",
     "bootstrap": "^4.3.1",
     "react": "^16.8.4",
+    "react-beautiful-dnd": "^13.0.0",
     "react-dom": "^16.8.4",
     "react-inline-editing": "^1.0.10",
     "react-scripts": "2.1.3",
