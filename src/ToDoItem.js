@@ -1,13 +1,17 @@
 import React, { Component } from 'react';
 import { Button } from 'reactstrap';
 import EditableLabel from 'react-inline-editing';
+import {Draggable} from 'react-beautiful-dnd';
 
 class ToDoItem extends Component {
-  renderData() {
-    let task = this.props.task;
+  renderData(task, provided) {
     if (task.completed) {
       return(
-        <tr>
+        <tr
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
           <td style={{textDecoration: "line-through"}}>
             {task.title}
           </td>
@@ -17,7 +21,11 @@ class ToDoItem extends Component {
       )
     } else {
       return(
-        <tr>
+        <tr
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
           <td>
             <EditableLabel
               text={task.title}
@@ -32,9 +40,17 @@ class ToDoItem extends Component {
   }
 
   render() {
+    let task = this.props.task;
+    let index = this.props.index;
+
     return (
       <React.Fragment>
-        {this.renderData()}
+        <Draggable key={task.id} draggableId={`${task.id}`} index={index}>
+            {(provided, snapshot) => (
+                this.renderData(task, provided)
+              )
+            }
+        </Draggable>
       </React.Fragment>
     )
   }
